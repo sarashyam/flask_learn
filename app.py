@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Flask, render_template
+from flask import Flask, render_template, request,redirect
 from flask_sqlalchemy import SQLAlchemy
 
 
@@ -18,21 +18,56 @@ class Todo(db.Model):
         return f"{self.sno} - {self.title}"
 
 
-@app.route('/')  # these are the end points from which we reach there
+@app.route("/", methods=['GET','POST'])  # these are the end points from which we reach there
 def hello_world():
     # return 'Hello, World!'
-    todo = Todo(title = "First todo" , desc = "Statring todo")
-    db.session.add(todo)
-    db.session.commit()
+    if request.method == "POST":
+        print(request.form['title1'])
+        print(request.form['desc'])
+        title = request.form['title1']
+        descr = request.form['desc']
+        print("Post")
+        todo = Todo(title = title , desc = descr)
+        db.session.add(todo)
+        db.session.commit()
     allTodo = Todo.query.all()
-    print(allTodo)
+    #print(allTodo)
     return render_template('index.html',allTodo=allTodo)
-@app.route('/products')
 
+
+@app.route('/show')
 def products():
     allTodo = Todo.query.all()
     print(allTodo)
     return " this is the product page"
+
+@app.route('/update/<int:sno>',methods=['GET','POST'])
+def update(sno):
+    if request.method == 'POST':
+        title = request.form['title1']
+        descr = request.form['desc']
+        print("Post")
+        todo = Todo.query.filter_by(sno =sno).first()
+        todo.title = title
+        todo.desc = descr
+        db.session.add(todo)
+        db.session.commit()
+    redirect("/")
+        
+    up_Todo = Todo.query.filter_by(sno =sno).first()
+    # allTodo = Todo.query.all()
+    # print(allTodo)
+    return render_template('update.html',todo=up_Todo)
+
+@app.route('/delete/<int:sno>')
+def delete(sno):
+    del_Todo = Todo.query.filter_by(sno =sno).first()
+    db.session.delete(del_Todo)
+    db.session.commit()
+    print(del_Todo)
+    return redirect("/")
+
+
 #--------- this is imp because if not present - the app will not work ---------
 if __name__ == "__main__":
         with app.app_context():
